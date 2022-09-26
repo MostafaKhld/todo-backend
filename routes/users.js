@@ -1,32 +1,28 @@
-const auth = require("../middleware/auth");
-const bcrypt = require("bcrypt");
-const _ = require("lodash");
-const { User, validate } = require("../models/user");
-const express = require("express");
-const router = express.Router();
+const { authJwt } = require("../middlewares");
+const view = require("../views/user.view");
 
-router.get("/me", auth, async (req, res) => {
-  const user = await User.findById(req.user._id).select("-password");
-  res.send(user);
-});
+module.exports = function (app) {
+  app.use(function (req, res, next) {
+    res.header(
+      "Access-Control-Allow-Headers",
+      "x-access-token, Origin, Content-Type, Accept"
+    );
+    next();
+  });
 
-router.post("/", async (req, res) => {
-  const { error } = validate(req.body);
-  if (error) return res.status(400).send(error.details[0].message);
+  app.get("/api/test/all", view.allAccess);
 
-  let user = await User.findOne({ email: req.body.email });
-  if (user) return res.status(400).send("User already registered.");
+  app.get("/api/test/user", [authJwt.verifyToken], view.userBoard);
 
-  user = new User(_.pick(req.body, ["name", "email", "password"]));
-  const salt = await bcrypt.genSalt(10);
-  user.password = await bcrypt.hash(user.password, salt);
-  await user.save();
+  app.get(
+    "/api/test/mod",
+    [authJwt.verifyToken, authJwt.isModerator],
+    view.moderatorBoard
+  );
 
-  const token = user.generateAuthToken();
-  res
-    .header("x-auth-token", token)
-    .header("access-control-expose-headers", "x-auth-token")
-    .send(_.pick(user, ["_id", "name", "email"]));
-});
-
-module.exports = router;
+  app.get(
+    "/api/test/admin",
+    [authJwt.verifyToken, authJwt.isAdmin],
+    view.adminBoard
+  );
+};

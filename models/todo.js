@@ -1,8 +1,8 @@
 const Joi = require("joi");
 const mongoose = require("mongoose");
 
-const Task = mongoose.model(
-  "Task",
+const Todo = mongoose.model(
+  "Todo",
   new mongoose.Schema({
     title: {
       type: String,
@@ -24,18 +24,26 @@ const Task = mongoose.model(
       minlength: 5,
       maxlength: 255,
     },
+
+    priority: {
+      type: String,
+      required: true,
+      minlength: 5,
+      maxlength: 255,
+    },
   })
 );
 
-function validateTask(Task) {
+function validateTodo(Todo) {
   const schema = {
-    name: Joi.string().min(5).max(50).required(),
-    phone: Joi.string().min(5).max(50).required(),
-    isGold: Joi.boolean(),
+    title: Joi.string().min(5).max(255).required(),
+    description: Joi.string().min(5).max(255).required(),
+    title: Joi.string().min(5).max(255).required(),
+    priority: Joi.string().min(5).max(255).required(),
   };
 
-  return Joi.validate(Task, schema);
+  return Joi.validate(Todo, schema);
 }
 
-exports.Task = Task;
-exports.validate = validateTask;
+exports.Todo = Todo;
+exports.validate = validateTodo;
