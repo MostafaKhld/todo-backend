@@ -1,19 +1,9 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    minlength: 2,
-    maxlength: 50,
-  },
-  email: { type: String, unique: true },
-  password: {
-    type: String,
-    required: true,
-    minlength: 5,
-    maxlength: 1024,
-  },
+  username: String,
+  email: String,
+  password: String,
   status: {
     type: String,
     enum: ["Pending", "Active"],
@@ -23,16 +13,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     unique: true,
   },
-  isAdmin: Boolean,
 });
 
 userSchema.methods.generateAuthToken = function () {
   const token = jwt.sign(
     {
       _id: this._id,
-      name: this.name,
+      username: this.username,
       email: this.email,
-      isAdmin: this.isAdmin,
     },
     config.get("jwtPrivateKey")
   );
@@ -43,9 +31,11 @@ const User = mongoose.model("User", userSchema);
 
 function validateUser(user) {
   const schema = {
-    name: Joi.string().min(2).max(50).required(),
+    username: Joi.string().min(2).max(50).required(),
     email: Joi.string().min(5).max(255).required().email(),
     password: Joi.string().min(5).max(255).required(),
+    confirmationCode: Joi.string().required(),
+    status: Joi.string().required(),
   };
 
   return Joi.validate(user, schema);

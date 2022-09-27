@@ -1,10 +1,10 @@
 const { Todo, validate } = require("../models/todo");
-const auth = require("../middleware/auth");
+const { verifyToken: auth } = require("../middleware/auth");
 const express = require("express");
 const router = express.Router();
 
 router.get("/", auth, async (req, res) => {
-  const todos = await Todo.find().select("-__v").sort("name");
+  const todos = await Todo.find().select("-__v").sort("title");
   res.send(todos);
 });
 

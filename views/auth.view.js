@@ -1,20 +1,21 @@
 const config = require("../config/auth.config");
 const nodemailer = require("../config/nodemailer.config");
 
-const db = require("../models");
-const User = db.user;
-const Role = db.role;
+const { User, validate } = require("../models/user");
 
 var jwt = require("jsonwebtoken");
-var bcrypt = require("bcryptjs");
+var bcrypt = require("bcrypt");
 
-exports.signup = (req, res) => {
+exports.signup = async (req, res) => {
   const token = jwt.sign({ email: req.body.email }, config.secret);
+  const salt = await bcrypt.genSalt(10);
+  console.log(req.body);
+  const password = await bcrypt.hash(req.body.password, salt);
 
   const user = new User({
     username: req.body.username,
     email: req.body.email,
-    password: bcrypt.hashSync(req.body.password, 8),
+    password: password,
     confirmationCode: token,
   });
 
@@ -23,118 +24,58 @@ exports.signup = (req, res) => {
       res.status(500).send({ message: err });
       return;
     }
-
-    if (req.body.roles) {
-      Role.find(
-        {
-          name: { $in: req.body.roles },
-        },
-        (err, roles) => {
-          if (err) {
-            res.status(500).send({ message: err });
-            return;
-          }
-
-          user.roles = roles.map((role) => role._id);
-          user.save((err) => {
-            if (err) {
-              res.status(500).send({ message: err });
-              return;
-            }
-
-            res.send({
-              message:
-                "User was registered successfully! Please check your email",
-            });
-            nodemailer.sendConfirmationEmail(
-              user.username,
-              user.email,
-              user.confirmationCode
-            );
-            res.redirect("/");
-          });
-        }
-      );
-    } else {
-      Role.findOne({ name: "user" }, (err, role) => {
-        if (err) {
-          res.status(500).send({ message: err });
-          return;
-        }
-
-        user.roles = [role._id];
-        user.save((err) => {
-          if (err) {
-            res.status(500).send({ message: err });
-            return;
-          }
-          res.send({
-            message:
-              "User was registered successfully! Please check your email",
-          });
-
-          nodemailer.sendConfirmationEmail(
-            user.username,
-            user.email,
-            user.confirmationCode
-          );
-        });
-      });
-    }
+    res.send({
+      message: "User was registered successfully! Please check your email",
+    });
+    nodemailer.sendConfirmationEmail(
+      user.username,
+      user.email,
+      user.confirmationCode
+    );
   });
 };
 
 exports.signin = (req, res) => {
   User.findOne({
     username: req.body.username,
-  })
-    .populate("roles", "-__v")
-    .exec((err, user) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
+  }).exec((err, user) => {
+    if (err) {
+      res.status(500).send({ message: err });
+      return;
+    }
 
-      if (!user) {
-        return res.status(404).send({ message: "User Not found." });
-      }
+    if (!user) {
+      return res.status(404).send({ message: "User Not found." });
+    }
 
-      var passwordIsValid = bcrypt.compareSync(
-        req.body.password,
-        user.password
-      );
+    var passwordIsValid = bcrypt.compareSync(req.body.password, user.password);
 
-      if (!passwordIsValid) {
-        return res.status(401).send({
-          accessToken: null,
-          message: "Invalid Password!",
-        });
-      }
-
-      if (user.status != "Active") {
-        return res.status(401).send({
-          message: "Pending Account. Please Verify Your Email!",
-        });
-      }
-
-      var token = jwt.sign({ id: user.id }, config.secret, {
-        expiresIn: 86400, // 24 hours
+    if (!passwordIsValid) {
+      return res.status(401).send({
+        accessToken: null,
+        message: "Invalid Password!",
       });
+    }
 
-      var authorities = [];
-
-      for (let i = 0; i < user.roles.length; i++) {
-        authorities.push("ROLE_" + user.roles[i].name.toUpperCase());
-      }
-      res.status(200).send({
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        roles: authorities,
-        accessToken: token,
-        status: user.status,
+    if (user.status != "Active") {
+      return res.status(401).send({
+        message: "Pending Account. Please Verify Your Email!",
       });
+    }
+
+    var token = jwt.sign({ id: user.id }, config.secret, {
+      expiresIn: 86400, // 24 hours
     });
+
+    res.status(200).send({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+
+      accessToken: token,
+      status: user.status,
+    });
+  });
 };
 
 exports.verifyUser = (req, res, next) => {
