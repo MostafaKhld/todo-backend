@@ -23,6 +23,7 @@ const Todo = mongoose.model(
       required: true,
       minlength: 5,
       maxlength: 255,
+      enum: ["TODO", "IN progress", "Under review", "Rework", "Completed "],
     },
 
     priority: {
@@ -30,6 +31,7 @@ const Todo = mongoose.model(
       required: true,
       minlength: 5,
       maxlength: 255,
+      enum: ["High", "Medium", "Low"],
     },
   })
 );
