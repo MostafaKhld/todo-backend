@@ -1,6 +1,6 @@
 {
   "jwtPrivateKey": "njnajdnjandajnda",
   "db": "mongodb://localhost/blueDB",
-  "port": "3900",
+  "port": "8000",
   "requiresAuth": true
 }
