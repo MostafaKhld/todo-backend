@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
+const config = require("config");
 
+var jwt = require("jsonwebtoken");
 const userSchema = new mongoose.Schema({
   username: String,
   email: String,
@@ -22,7 +24,8 @@ userSchema.methods.generateAuthToken = function () {
       username: this.username,
       email: this.email,
     },
-    config.get("jwtPrivateKey")
+    config.get("jwtPrivateKey"),
+    { expiresIn: 86400 }
   );
   return token;
 };

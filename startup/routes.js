@@ -8,7 +8,7 @@ module.exports = function (app) {
   app.use(express.json());
 
   app.use("/api/auth", auth);
-  // app.use("/api/todo", todo);
+  app.use("/api/todo", todo);
 
   app.use(error);
 };

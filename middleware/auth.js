@@ -4,12 +4,14 @@ const { User, validate } = require("../models/user");
 
 verifyToken = (req, res, next) => {
   let token = req.headers["x-access-token"];
-
+  console.log("token" + config.get("jwtPrivateKey"));
   if (!token) {
     return res.status(403).send({ message: "No token provided!" });
   }
 
-  jwt.verify(token, config.secret, (err, decoded) => {
+  jwt.verify(token, config.get("jwtPrivateKey"), (err, decoded) => {
+    console.log(err);
+    console.log(decoded);
     if (err) {
       return res.status(401).send({ message: "Unauthorized!" });
     }

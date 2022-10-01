@@ -19,7 +19,7 @@ exports.signup = async (req, res) => {
     confirmationCode: token,
   });
 
-  user.save((err, user) => {
+  await user.save((err, user) => {
     if (err) {
       res.status(500).send({ message: err });
       return;
@@ -63,9 +63,7 @@ exports.signin = (req, res) => {
       });
     }
 
-    var token = jwt.sign({ id: user.id }, config.secret, {
-      expiresIn: 86400, // 24 hours
-    });
+    var token = user.generateAuthToken();
 
     res.status(200).send({
       id: user._id,

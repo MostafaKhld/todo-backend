@@ -1,14 +1,36 @@
 const { Todo, validate } = require("../models/todo");
 const { verifyToken: auth } = require("../middleware/auth");
 const express = require("express");
+const _ = require("lodash");
 const router = express.Router();
 
 router.get("/", auth, async (req, res) => {
-  const todos = await Todo.find().select("-__v").sort("title");
-  res.send(todos);
+  const todos = await Todo.find().select("-__v").sort("priority");
+  // const todos = await Todo.find().select("-__v").sort("priority");
+  var obj = {};
+  let AllTodos = [];
+  let bundle = _(todos).groupBy("status").value();
+  for (let index = 0; index < Object.keys(bundle).length; index++) {
+    // console.log(Object.keys(bundle)[index]);
+    // console.log(Object.values(bundle)[index]);
+    let name = Object.keys(bundle)[index].toString();
+    // console.log(name);
+    // console.log(bundle[name]);
+    // bundle[Object.keys(bundle)[index]].title = Object.keys(bundle)[index];
+    // console.log(bundle[Object.keys(bundle)[index]].title);
+    obj[name] = {
+      items: Object.values(bundle)[index],
+      title: Object.keys(bundle)[index],
+    };
+  }
+  //   const result = _.flatMap(AllTodos, ({ name, tags }) =>
+  //   _.map(tags, tag => ({ name, ...tag }))
+  // );
+  res.send(obj);
 });
 
 router.post("/", auth, async (req, res) => {
+  console.log(req.body);
   const { error } = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
