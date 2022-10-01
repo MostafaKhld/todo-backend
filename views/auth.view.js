@@ -1,4 +1,4 @@
-const config = require("../config/auth.config");
+const config = require("config");
 const nodemailer = require("../config/nodemailer.config");
 
 const { User, validate } = require("../models/user");
@@ -7,9 +7,12 @@ var jwt = require("jsonwebtoken");
 var bcrypt = require("bcrypt");
 
 exports.signup = async (req, res) => {
-  const token = jwt.sign({ email: req.body.email }, config.secret);
+  const token = jwt.sign(
+    { email: req.body.email },
+    config.get("jwtPrivateKey")
+  );
   const salt = await bcrypt.genSalt(10);
-  console.log(req.body);
+
   const password = await bcrypt.hash(req.body.password, salt);
 
   const user = new User({
