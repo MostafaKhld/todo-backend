@@ -23,7 +23,7 @@ router.post("/", async (req, res) => {
       }).save();
     }
 
-    const link = `http://localhost:3000/password-reset/${user._id}/${token.token}`;
+    const link = `${process.env.REACTURL}password-reset/${user._id}/${token.token}`;
 
     nodemailer.sendResetPassword(user.username, user.email, link);
 

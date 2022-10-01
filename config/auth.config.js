@@ -1,4 +1,4 @@
 module.exports = {
-  user: "viber.97@gmail.com",
-  pass: "kskzdkorledcshhc",
+  user: process.env.USER,
+  pass: process.env.PASS,
 };
